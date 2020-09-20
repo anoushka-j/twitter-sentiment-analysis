@@ -13,6 +13,7 @@ auth.set_access_token(keys.ACCESS_TOKEN, keys.ACCESS_TOKEN_SECRET)
 api = tweepy.API(auth)
 df = pd.DataFrame(columns=['Tweets'])
 
+#getting search requests from user 
 def askSearch() : 
     search = ''
     searches = []
@@ -24,6 +25,7 @@ def askSearch() :
             searches.append(search)
     return searches 
 
+#storing tweets in datafrane 
 def storeTweets(search) : 
     i = 0 
     for tweet in tweepy.Cursor(api.search, q=search, count=1000, lang="en").items() : 
@@ -33,14 +35,18 @@ def storeTweets(search) :
             break
         else : 
             pass 
-
+        
+#removing certain characters to make sentiment analysis easier 
 def cleanTweet(tweet) : 
     return ' '.join(re.sub('(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)', ' ', tweet).split())
 
 # use VADER to perform sentiment analysis on stored tweets
 analyser = SentimentIntensityAnalyzer()
 
+#performing sentiment analysis 
+#assigning Positive, Negative or Neutral depending on the polarity score 
 def sentiment_analysis(tweet):
+    #using the compound vader score 
    current_sentiment = analyser.polarity_scores(tweet)["compound"]   
    if current_sentiment > 0 : 
        return 'Positive'
@@ -48,9 +54,13 @@ def sentiment_analysis(tweet):
        return 'Neutral'
    else : 
        return 'Negative'
-  
-storeTweets(search=[askSearch()])
 
+#asking for search terms and storing them 
+storeTweets(search=[askSearch()])
+#cleaning tweets and adding them to a new column 
 df['clean_tweet'] = df['Tweets'].apply(lambda x: cleanTweet(x))
+#applying sentiment analysis and adding a new column 
 df['Sentiment'] = df['clean_tweet'].apply(lambda x: sentiment_analysis(x))
+#plotting a bar graph with the data found 
+#counts number of positive, negative and neutral sentiments 
 df['Sentiment'].value_counts().plot(kind='barh')
